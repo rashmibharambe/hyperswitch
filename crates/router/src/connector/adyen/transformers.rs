@@ -3965,7 +3965,7 @@ impl ForeignFrom<AdyenStatus> for storage_enums::PayoutStatus {
             AdyenStatus::Authorised | AdyenStatus::PayoutConfirmReceived => Self::Success,
             AdyenStatus::Cancelled | AdyenStatus::PayoutDeclineReceived => Self::Cancelled,
             AdyenStatus::Error => Self::Failed,
-            AdyenStatus::Pending => Self::Pending,
+            AdyenStatus::Pending => Self::OutgoingPaymentSent,
             AdyenStatus::PayoutSubmitReceived => Self::RequiresFulfillment,
             _ => Self::Ineligible,
         }

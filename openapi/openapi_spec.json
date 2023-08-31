@@ -10019,14 +10019,17 @@
       "PayoutStatus": {
         "type": "string",
         "enum": [
+          "requires_customer_action",
+          "requires_payout_method_data",
+          "requires_creation",
+          "requires_fulfillment",
+          "outgoing_payment_sent",
           "success",
           "failed",
           "cancelled",
-          "pending",
           "ineligible",
-          "requires_creation",
-          "requires_payout_method_data",
-          "requires_fulfillment"
+          "expired",
+          "funds_refunded"
         ]
       },
       "PayoutType": {

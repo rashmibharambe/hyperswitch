@@ -4272,7 +4272,7 @@ impl ForeignFrom<StripeConnectStatus> for enums::PayoutStatus {
             StripeConnectStatus::Canceled => Self::Cancelled,
             StripeConnectStatus::Pending
             | StripeConnectStatus::Processing
-            | StripeConnectStatus::Consumed => Self::Pending,
+            | StripeConnectStatus::Consumed => Self::OutgoingPaymentSent,
         }
     }
 }
