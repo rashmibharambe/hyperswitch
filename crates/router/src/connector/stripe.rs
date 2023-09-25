@@ -1923,7 +1923,13 @@ impl api::IncomingWebhook for Stripe {
             stripe::WebhookEventType::ChargeDisputeFundsReinstated => {
                 api::IncomingWebhookEvent::DisputeWon
             }
+            stripe::WebhookEventType::PayoutCancelled => api::IncomingWebhookEvent::PayoutCancelled,
+            stripe::WebhookEventType::PayoutCreated => api::IncomingWebhookEvent::PayoutCreated,
+            stripe::WebhookEventType::PayoutFailed => api::IncomingWebhookEvent::PayoutFailed,
+            stripe::WebhookEventType::PayoutSuccess => api::IncomingWebhookEvent::PayoutSuccess,
             stripe::WebhookEventType::Unknown
+            | stripe::WebhookEventType::PayoutUpdated
+            | stripe::WebhookEventType::PayoutReconCompleted
             | stripe::WebhookEventType::ChargeCaptured
             | stripe::WebhookEventType::ChargeExpired
             | stripe::WebhookEventType::ChargeFailed

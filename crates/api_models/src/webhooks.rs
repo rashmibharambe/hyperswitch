@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use time::PrimitiveDateTime;
 use utoipa::ToSchema;
 
-use crate::{disputes, enums as api_enums, payments, refunds};
+use crate::{disputes, enums as api_enums, payments, payouts, refunds};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -30,10 +30,12 @@ pub enum IncomingWebhookEvent {
     EndpointVerification,
 
     // Payouts
-    PayoutProcessing,
     PayoutCancelled,
+    PayoutCreated,
+    PayoutFailed,
     PayoutFundsConverted,
     PayoutSent,
+    PayoutSuccess,
     PayoutExpired,
     PayoutReversed,
     PayoutBouncedBack,
@@ -72,10 +74,12 @@ impl From<IncomingWebhookEvent> for WebhookFlow {
             IncomingWebhookEvent::EndpointVerification => Self::ReturnResponse,
             IncomingWebhookEvent::SourceChargeable
             | IncomingWebhookEvent::SourceTransactionCreated => Self::BankTransfer,
-            IncomingWebhookEvent::PayoutProcessing
-            | IncomingWebhookEvent::PayoutCancelled
+            IncomingWebhookEvent::PayoutCancelled
+            | IncomingWebhookEvent::PayoutCreated
+            | IncomingWebhookEvent::PayoutFailed
             | IncomingWebhookEvent::PayoutFundsConverted
             | IncomingWebhookEvent::PayoutSent
+            | IncomingWebhookEvent::PayoutSuccess
             | IncomingWebhookEvent::PayoutExpired
             | IncomingWebhookEvent::PayoutReversed
             | IncomingWebhookEvent::PayoutBouncedBack
@@ -132,6 +136,8 @@ pub enum OutgoingWebhookContent {
     RefundDetails(refunds::RefundResponse),
     #[schema(value_type = DisputeResponse)]
     DisputeDetails(Box<disputes::DisputeResponse>),
+    #[schema(value_type = PayoutCreateResponse)]
+    PayoutDetials(payouts::PayoutCreateResponse),
 }
 
 #[derive(Debug, Clone, Serialize)]

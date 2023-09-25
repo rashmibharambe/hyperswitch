@@ -361,6 +361,10 @@ pub async fn payouts_webhook_flow<W: types::OutgoingWebhookType>(
     event_type: api_models::webhooks::IncomingWebhookEvent,
 ) -> CustomResult<(), errors::ApiErrorResponse> {
     metrics::INCOMING_PAYOUTS_WEBHOOK_METRIC.add(&metrics::CONTEXT, 1, &[]);
+    if source_verified {
+        
+    }
+    Ok(())
 }
 
 #[instrument(skip_all)]

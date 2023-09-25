@@ -8,7 +8,8 @@ use router_env::logger;
 use serde::Serialize;
 
 use super::{
-    payment_intents::types::StripePaymentIntentResponse, refunds::types::StripeRefundResponse,
+    payment_intents::types::StripePaymentIntentResponse, payouts::types::StripePayoutResponse,
+    refunds::types::StripeRefundResponse,
 };
 use crate::{
     core::{errors, webhooks::types::OutgoingWebhookType},
@@ -73,6 +74,7 @@ pub enum StripeWebhookObject {
     PaymentIntent(StripePaymentIntentResponse),
     Refund(StripeRefundResponse),
     Dispute(StripeDisputeResponse),
+    Payout(StripePayoutResponse),
 }
 
 #[derive(Serialize, Debug)]
@@ -130,7 +132,9 @@ fn get_stripe_event_type(event_type: api_models::enums::EventType) -> &'static s
         api_models::enums::EventType::PaymentSucceeded => "payment_intent.succeeded",
         api_models::enums::EventType::PaymentFailed => "payment_intent.payment_failed",
         api_models::enums::EventType::PaymentProcessing => "payment_intent.processing",
-
+        api_models::enums::EventType::PayoutSucceeded => "payout.paid",
+        api_models::enums::EventType::PayoutFailed => "payout.failed",
+        
         // the below are not really stripe compatible because stripe doesn't provide this
         api_models::enums::EventType::ActionRequired => "action.required",
         api_models::enums::EventType::RefundSucceeded => "refund.succeeded",
@@ -142,6 +146,7 @@ fn get_stripe_event_type(event_type: api_models::enums::EventType) -> &'static s
         api_models::enums::EventType::DisputeChallenged => "dispute.challenged",
         api_models::enums::EventType::DisputeWon => "dispute.won",
         api_models::enums::EventType::DisputeLost => "dispute.lost",
+        api_models::enums::EventType::PayoutProcessing => "payout.paid",
     }
 }
 
@@ -179,6 +184,7 @@ impl From<api::OutgoingWebhookContent> for StripeWebhookObject {
             api::OutgoingWebhookContent::DisputeDetails(dispute) => {
                 Self::Dispute((*dispute).into())
             }
+            api::OutgoingWebhookContent::PayoutDetials(payout) => Self::Payout(payout.into()),
         }
     }
 }

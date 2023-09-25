@@ -3183,6 +3183,8 @@ pub enum WebhookEventObjectType {
     Charge,
     Source,
     Refund,
+    Transfer,
+    Payout,
 }
 
 #[derive(Debug, Deserialize)]
@@ -3233,6 +3235,18 @@ pub enum WebhookEventType {
     SourceTransactionCreated,
     #[serde(rename = "payment_intent.partially_funded")]
     PaymentIntentPartiallyFunded,
+    #[serde(rename = "payout.canceled")]
+    PayoutCancelled,
+    #[serde(rename = "payout.created")]
+    PayoutCreated,
+    #[serde(rename = "payout.failed")]
+    PayoutFailed,
+    #[serde(rename = "payout.paid")]
+    PayoutSuccess,
+    #[serde(rename = "payout.reconciliation_completed")]
+    PayoutReconCompleted,
+    #[serde(rename = "payout.updated")]
+    PayoutUpdated,
     #[serde(other)]
     Unknown,
 }

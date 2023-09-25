@@ -1109,7 +1109,7 @@ pub async fn response_handler(
         payout_id: payouts.payout_id.to_owned(),
         merchant_id: merchant_account.merchant_id.to_owned(),
         amount: payouts.amount.to_owned(),
-        currency: payouts.destination_currency.to_owned(),
+        currency: payouts.destination_currency.to_string(),
         connector: Some(payout_attempt.connector.to_owned()),
         payout_type: payouts.payout_type.to_owned(),
         billing: address,
@@ -1130,6 +1130,7 @@ pub async fn response_handler(
         status: payout_attempt.status.to_owned(),
         error_message: payout_attempt.error_message.to_owned(),
         error_code: payout_attempt.error_code,
+        created: Some(payouts.created_at),
     };
     Ok(services::ApplicationResponse::Json(response))
 }

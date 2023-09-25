@@ -6,6 +6,7 @@ use common_utils::{
 use masking::Secret;
 use router_derive::DebugAsDisplay;
 use serde::{Deserialize, Serialize};
+use time::PrimitiveDateTime;
 use utoipa::ToSchema;
 
 use crate::{admin, enums as api_enums, payments};
@@ -283,7 +284,7 @@ pub struct PayoutCreateResponse {
 
     /// Recipient's currency for the payout request
     #[schema(value_type = Currency, example = "USD")]
-    pub currency: api_enums::Currency,
+    pub currency: String,
 
     /// The connector used for the payout
     #[schema(example = "wise")]
@@ -377,6 +378,11 @@ pub struct PayoutCreateResponse {
     /// If there was an error while calling the connectors the code is received here
     #[schema(value_type = String, example = "E0001")]
     pub error_code: Option<String>,
+
+    /// Time when the payout was created
+    #[schema(example = "2022-09-10T10:11:12Z")]
+    #[serde(with = "common_utils::custom_serde::iso8601::option")]
+    pub created: Option<PrimitiveDateTime>,
 }
 
 #[derive(Default, Debug, Clone, Deserialize, ToSchema)]
