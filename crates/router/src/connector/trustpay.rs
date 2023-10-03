@@ -951,7 +951,7 @@ impl api::IncomingWebhook for Trustpay {
 impl services::ConnectorRedirectResponse for Trustpay {
     fn get_flow_type(
         &self,
-        query_params: &str,
+        _query_params: &str,
         _json_payload: Option<serde_json::Value>,
         _action: services::PaymentAction,
     ) -> CustomResult<payments::CallConnectorAction, errors::ConnectorError> {

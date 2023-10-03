@@ -1945,7 +1945,7 @@ impl api::IncomingWebhook for Stripe {
 impl services::ConnectorRedirectResponse for Stripe {
     fn get_flow_type(
         &self,
-        query_params: &str,
+        _query_params: &str,
         _json_payload: Option<serde_json::Value>,
         _action: services::PaymentAction,
     ) -> CustomResult<crate::core::payments::CallConnectorAction, errors::ConnectorError> {
