@@ -56,6 +56,8 @@ pub trait AppStateInfo {
     fn add_merchant_id(&mut self, merchant_id: Option<String>);
     fn add_flow_name(&mut self, flow_name: String);
     fn get_request_id(&self) -> Option<String>;
+    fn add_external_call_latencies(&mut self, url_path: String, latency: i64);
+    fn get_external_call_latencies(&self) -> Option<i64>;
 }
 
 impl AppStateInfo for AppState {
@@ -80,6 +82,12 @@ impl AppStateInfo for AppState {
     }
     fn get_request_id(&self) -> Option<String> {
         self.api_client.get_request_id()
+    }
+    fn add_external_call_latencies(&mut self, url_path: String, latency: i64) {
+        self.api_client.add_external_call_latencies(url_path, latency);
+    }
+    fn get_external_call_latencies(&self) -> Option<i64> {
+        self.api_client.get_external_call_latencies()
     }
 }
 

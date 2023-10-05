@@ -171,6 +171,8 @@ where
     fn get_request_id(&self) -> Option<String>;
     fn add_merchant_id(&mut self, _merchant_id: Option<String>);
     fn add_flow_name(&mut self, _flow_name: String);
+    fn add_external_call_latencies(&mut self, _url_path: String, _latency: i64);
+    fn get_external_call_latencies(&self) -> Option<i64>;
 }
 
 dyn_clone::clone_trait_object!(ApiClient);
@@ -181,6 +183,7 @@ pub struct ProxyClient {
     non_proxy_client: reqwest::Client,
     whitelisted_urls: Vec<String>,
     request_id: Option<String>,
+    external_call_latencies: Option<Vec<(String,i64)>>,
 }
 
 impl ProxyClient {
@@ -222,6 +225,7 @@ impl ProxyClient {
             non_proxy_client,
             whitelisted_urls,
             request_id: None,
+            external_call_latencies: None,
         })
     }
 
@@ -361,6 +365,22 @@ impl ApiClient for ProxyClient {
     fn add_merchant_id(&mut self, _merchant_id: Option<String>) {}
 
     fn add_flow_name(&mut self, _flow_name: String) {}
+
+    fn add_external_call_latencies(&mut self, _url_path: String, _latency: i64) {
+        // Check if the external_call_latencies field is None and initialize it if needed
+        if self.external_call_latencies.is_none() {
+            self.external_call_latencies = Some(Vec::new());
+        }
+
+        // Add the latency information as a tuple to the external_call_latencies Vec
+        if let Some(ref mut latencies) = self.external_call_latencies {
+            latencies.push((_url_path, _latency));
+        }
+    }
+
+    fn get_external_call_latencies(&self) -> Option<i64> {
+        None
+    }
 }
 
 ///
@@ -414,4 +434,10 @@ impl ApiClient for MockApiClient {
     fn add_merchant_id(&mut self, _merchant_id: Option<String>) {}
 
     fn add_flow_name(&mut self, _flow_name: String) {}
+
+    fn add_external_call_latencies(&mut self, _url_path: String, _latency: i64) {}
+
+    fn get_external_call_latencies(&self) -> Option<i64> {
+        None
+    }
 }
