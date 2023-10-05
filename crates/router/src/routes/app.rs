@@ -84,7 +84,8 @@ impl AppStateInfo for AppState {
         self.api_client.get_request_id()
     }
     fn add_external_call_latencies(&mut self, url_path: String, latency: i64) {
-        self.api_client.add_external_call_latencies(url_path, latency);
+        self.api_client
+            .add_external_call_latencies(url_path, latency);
     }
     fn get_external_call_latencies(&self) -> Option<i64> {
         self.api_client.get_external_call_latencies()

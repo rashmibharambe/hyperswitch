@@ -183,7 +183,7 @@ pub struct ProxyClient {
     non_proxy_client: reqwest::Client,
     whitelisted_urls: Vec<String>,
     request_id: Option<String>,
-    external_call_latencies: Option<Vec<(String,i64)>>,
+    external_call_latencies: Option<Vec<(String, i64)>>,
 }
 
 impl ProxyClient {
@@ -379,7 +379,7 @@ impl ApiClient for ProxyClient {
     }
 
     fn get_external_call_latencies(&self) -> Option<i64> {
-        // Check if externcal call latencies field has some value
+        // Check if external call latencies field has some value
         // If yes calculate the sum of all latencies and return the sum
         if let Some(ref latencies) = self.external_call_latencies {
             let sum: i64 = latencies.iter().map(|(_, latency)| *latency).sum();
