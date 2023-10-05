@@ -171,8 +171,8 @@ where
     fn get_request_id(&self) -> Option<String>;
     fn add_merchant_id(&mut self, _merchant_id: Option<String>);
     fn add_flow_name(&mut self, _flow_name: String);
-    fn add_external_call_latencies(&mut self, _url_path: String, _latency: i64);
-    fn get_external_call_latencies(&self) -> Option<i64>;
+    fn add_external_call_latencies(&mut self, _url_path: String, _latency: u128);
+    fn get_external_call_latencies(&self) -> Option<u128>;
 }
 
 dyn_clone::clone_trait_object!(ApiClient);
@@ -183,7 +183,7 @@ pub struct ProxyClient {
     non_proxy_client: reqwest::Client,
     whitelisted_urls: Vec<String>,
     request_id: Option<String>,
-    external_call_latencies: Option<Vec<(String, i64)>>,
+    external_call_latencies: Option<Vec<(String, u128)>>,
 }
 
 impl ProxyClient {
@@ -366,7 +366,7 @@ impl ApiClient for ProxyClient {
 
     fn add_flow_name(&mut self, _flow_name: String) {}
 
-    fn add_external_call_latencies(&mut self, _url_path: String, _latency: i64) {
+    fn add_external_call_latencies(&mut self, _url_path: String, _latency: u128) {
         // Check if the external_call_latencies field is None and initialize it if needed
         if self.external_call_latencies.is_none() {
             self.external_call_latencies = Some(Vec::new());
@@ -378,11 +378,11 @@ impl ApiClient for ProxyClient {
         }
     }
 
-    fn get_external_call_latencies(&self) -> Option<i64> {
+    fn get_external_call_latencies(&self) -> Option<u128> {
         // Check if external call latencies field has some value
         // If yes calculate the sum of all latencies and return the sum
         if let Some(ref latencies) = self.external_call_latencies {
-            let sum: i64 = latencies.iter().map(|(_, latency)| *latency).sum();
+            let sum: u128 = latencies.iter().map(|(_, latency)| *latency).sum();
             Some(sum)
         } else {
             None
@@ -442,9 +442,9 @@ impl ApiClient for MockApiClient {
 
     fn add_flow_name(&mut self, _flow_name: String) {}
 
-    fn add_external_call_latencies(&mut self, _url_path: String, _latency: i64) {}
+    fn add_external_call_latencies(&mut self, _url_path: String, _latency: u128) {}
 
-    fn get_external_call_latencies(&self) -> Option<i64> {
+    fn get_external_call_latencies(&self) -> Option<u128> {
         None
     }
 }
