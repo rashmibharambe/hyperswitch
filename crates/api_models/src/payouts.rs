@@ -148,6 +148,10 @@ pub struct PayoutCreateRequest {
     /// Provide a reference to a stored payment method
     #[schema(example = "187282ab-40ef-47a9-9206-5099ba31e432")]
     pub payout_token: Option<String>,
+
+    /// The business profile to use for this payment, if not passed the default business profile
+    /// associated with the merchant account will be used.
+    pub profile_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -383,6 +387,10 @@ pub struct PayoutCreateResponse {
     #[schema(example = "2022-09-10T10:11:12Z")]
     #[serde(with = "common_utils::custom_serde::iso8601::option")]
     pub created: Option<PrimitiveDateTime>,
+
+    /// The business profile to use for this payment, if not passed the default business profile
+    /// associated with the merchant account will be used.
+    pub profile_id: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, Deserialize, ToSchema)]

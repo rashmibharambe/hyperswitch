@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use api_models::payments::HeaderPayload;
 use common_utils::errors::ReportSwitchExt;
+use diesel_models::payout_attempt::PayoutAttemptUpdate;
 use error_stack::{report, IntoReport, ResultExt};
 use masking::ExposeInterface;
 use router_env::{instrument, tracing};
@@ -275,6 +276,34 @@ pub async fn get_payment_attempt_from_object_reference_id(
     }
 }
 
+pub async fn get_payout_attempt_from_object_ref_id(
+    state: &AppState,
+    object_reference_id: api_models::webhooks::ObjectReferenceId,
+    merchant_account: &domain::MerchantAccount,
+) -> CustomResult<diesel_models::payout_attempt::PayoutAttempt, errors::ApiErrorResponse> {
+    let db = &*state.store;
+    match object_reference_id {
+        api_models::webhooks::ObjectReferenceId::PayoutId(
+            api_models::webhooks::PayoutIdType::PayoutId(ref id),
+        ) => db
+            .find_payout_attempt_by_merchant_id_payout_id(&merchant_account.merchant_id, id)
+            .await
+            .to_not_found_response(errors::ApiErrorResponse::WebhookResourceNotFound),
+        api_models::webhooks::ObjectReferenceId::PayoutId(
+            api_models::webhooks::PayoutIdType::ConnectorPayoutId(ref id),
+        ) => db
+            .find_payout_attempt_by_merchant_id_connector_payout_id(
+                &merchant_account.merchant_id,
+                id,
+            )
+            .await
+            .to_not_found_response(errors::ApiErrorResponse::WebhookResourceNotFound),
+        _ => Err(errors::ApiErrorResponse::WebhookProcessingFailure)
+            .into_report()
+            .attach_printable("received a non-payout id for retrieving payouts"),
+    }
+}
+
 pub async fn get_or_update_dispute_object(
     state: AppState,
     option_dispute: Option<diesel_models::dispute::Dispute>,
@@ -359,12 +388,82 @@ pub async fn payouts_webhook_flow<W: types::OutgoingWebhookType>(
     connector: &(dyn api::Connector + Sync),
     request_details: &api::IncomingWebhookRequestDetails<'_>,
     event_type: api_models::webhooks::IncomingWebhookEvent,
+    key_store: domain::MerchantKeyStore,
 ) -> CustomResult<(), errors::ApiErrorResponse> {
     metrics::INCOMING_PAYOUTS_WEBHOOK_METRIC.add(&metrics::CONTEXT, 1, &[]);
     if source_verified {
-        
+        // Fetch payout attempt using object_reference_id
+        let payout_attempt = get_payout_attempt_from_object_ref_id(
+            &state,
+            webhook_details.object_reference_id,
+            &merchant_account,
+        )
+        .await?;
+
+        // Update payout status
+        let updated_payout_details = connector.get_payout_details(request_details).switch()?;
+        if let Some(ref status) = updated_payout_details.status {
+            let db = &*state.store.to_owned();
+            let updated_payout_attempt = PayoutAttemptUpdate::StatusUpdate {
+                status: status.to_owned(),
+                error_message: None,
+                error_code: None,
+                is_eligible: None,
+                last_modified_at: Some(common_utils::date_time::now()),
+            };
+            db.update_payout_attempt_by_merchant_id_payout_id(
+                &merchant_account.merchant_id.to_owned(),
+                &payout_attempt.payout_id.clone(),
+                updated_payout_attempt,
+            )
+            .await
+            .change_context(errors::ApiErrorResponse::InternalServerError)
+            .attach_printable("Error updating payout_attempt in db")
+            .ok();
+        }
+
+        // Fetch payout body
+        let payout_req = api_models::payouts::PayoutRetrieveRequest {
+            payout_id: payout_attempt.payout_id.clone(),
+            force_sync: None,
+        };
+        let payout_data = super::payouts::make_payout_data(
+            &state,
+            &merchant_account,
+            &key_store,
+            &api_models::payouts::PayoutRequest::PayoutRetrieveRequest(payout_req),
+        )
+        .await?;
+        let response = super::payouts::response_handler(&merchant_account, &payout_data).await?;
+
+        // Send outgoing webhook
+        match response {
+            services::ApplicationResponse::Json(payouts_response) => {
+                let event_type: Option<enums::EventType> = payouts_response.status.foreign_into();
+
+                if let Some(outgoing_event_type) = event_type {
+                    create_event_and_trigger_outgoing_webhook::<W>(
+                        state,
+                        merchant_account,
+                        outgoing_event_type,
+                        enums::EventClass::Payouts,
+                        None,
+                        payout_attempt.payout_id,
+                        enums::EventObjectType::PayoutDetails,
+                        api::OutgoingWebhookContent::PayoutDetials(payouts_response),
+                    )
+                    .await?;
+                }
+            }
+            _ => Err(errors::ApiErrorResponse::WebhookProcessingFailure)
+                .into_report()
+                .attach_printable("received non-json response from payouts response handler")?,
+        }
+
+        Ok(())
+    } else {
+        Err(errors::ApiErrorResponse::WebhookAuthenticationFailed).into_report()
     }
-    Ok(())
 }
 
 #[instrument(skip_all)]
@@ -956,6 +1055,7 @@ pub async fn webhooks_core<W: types::OutgoingWebhookType>(
                 *connector,
                 &request_details,
                 event_type,
+                key_store,
             )
             .await
             .attach_printable("Incoming payouts webhook flow failed")?,
@@ -1037,6 +1137,7 @@ async fn fetch_mca_and_connector(
             .switch()
             .attach_printable("Could not find object reference id in incoming webhook body")?;
 
+        // logger::debug!("OBJECT REF ID TYPE {}", object_ref_id);
         let profile_id = helper_utils::get_profile_id_using_object_reference_id(
             &*state.store,
             object_ref_id,

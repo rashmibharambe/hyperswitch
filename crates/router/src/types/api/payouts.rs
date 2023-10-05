@@ -5,9 +5,18 @@ pub use api_models::payouts::{
 };
 
 #[cfg(feature = "payouts")]
+use api_models::enums::PayoutStatus;
+
+#[cfg(feature = "payouts")]
 use super::ConnectorCommon;
 #[cfg(feature = "payouts")]
 use crate::{services::api, types};
+
+#[cfg(feature = "payouts")]
+pub struct PayoutPayload {
+    pub connector_payout_id: String,
+    pub status: Option<PayoutStatus>,
+}
 
 #[cfg(feature = "payouts")]
 #[derive(Debug, Clone)]

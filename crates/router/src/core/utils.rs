@@ -133,7 +133,20 @@ pub async fn construct_payout_router_data<'a, F>(
     let payouts = &payout_data.payouts;
     let payout_attempt = &payout_data.payout_attempt;
     let customer_details = &payout_data.customer_details;
-    let connector_label = format!("{}_{}_{}", connector_id, business_country, business_label);
+
+    // Fetch profile id for creating connector label using {profile_id}_{connector_name}
+    let profile_id = get_profile_id_from_business_details(
+        payout_attempt.business_country,
+        payout_attempt.business_label.as_ref(),
+        merchant_account,
+        payout_attempt.profile_id.as_ref(),
+        &*state.store,
+        false,
+    )
+    .await
+    .change_context(errors::ApiErrorResponse::InternalServerError)
+    .attach_printable("profile_id is not set in payouts")?;
+    let connector_label = format!("{profile_id}_{}", connector_name);
     let connector_customer_id = customer_details
         .as_ref()
         .and_then(|c| c.connector_customer.as_ref())
@@ -201,8 +214,7 @@ pub async fn construct_payout_router_data<'a, F>(
         payment_method_token: None,
         recurring_mandate_payment_data: None,
         preprocessing_id: None,
-        connector_request_reference_id: IRRELEVANT_CONNECTOR_REQUEST_REFERENCE_ID_IN_DISPUTE_FLOW
-            .to_string(),
+        connector_request_reference_id: payouts.payout_id.to_owned(),
         payout_method_data: payout_data.payout_method_data.to_owned(),
         quote_id: None,
         test_mode,

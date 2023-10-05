@@ -786,6 +786,8 @@ impl From<WebhookEventStatus> for api_models::webhooks::IncomingWebhookEvent {
             | WebhookEventStatus::Canceled
             | WebhookEventStatus::Chargeable
             | WebhookEventStatus::Failed
+            | WebhookEventStatus::Consumed
+            | WebhookEventStatus::Pending
             | WebhookEventStatus::Unknown => Self::EventNotSupported,
         }
     }
@@ -3183,7 +3185,7 @@ pub enum WebhookEventObjectType {
     Charge,
     Source,
     Refund,
-    Transfer,
+    // Transfer,
     Payout,
 }
 
@@ -3271,6 +3273,8 @@ pub enum WebhookEventStatus {
     Canceled,
     Chargeable,
     Failed,
+    Consumed,
+    Pending,
     #[serde(other)]
     Unknown,
 }
@@ -3784,6 +3788,8 @@ pub struct StripeConnectPayoutCreateRequest {
     currency: enums::Currency,
     destination: String,
     transfer_group: String,
+    #[serde(rename = "metadata[order_id]")]
+    metadata_order_id: String,
 }
 
 #[cfg(feature = "payouts")]
@@ -3821,6 +3827,8 @@ pub struct TransferReversals {
 pub struct StripeConnectPayoutFulfillRequest {
     amount: i64,
     currency: enums::Currency,
+    #[serde(rename = "metadata[order_id]")]
+    metadata_order_id: String,
 }
 
 #[cfg(feature = "payouts")]
@@ -4061,6 +4069,7 @@ impl<F> TryFrom<&types::PayoutsRouterData<F>> for StripeConnectPayoutCreateReque
             currency: request.destination_currency,
             destination: connector_customer_id,
             transfer_group: request.payout_id,
+            metadata_order_id: item.connector_request_reference_id.to_owned(),
         })
     }
 }
@@ -4096,6 +4105,7 @@ impl<F> TryFrom<&types::PayoutsRouterData<F>> for StripeConnectPayoutFulfillRequ
         Ok(Self {
             amount: request.amount,
             currency: request.destination_currency,
+            metadata_order_id: item.connector_request_reference_id.to_owned(),
         })
     }
 }
