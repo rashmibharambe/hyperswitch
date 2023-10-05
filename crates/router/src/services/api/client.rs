@@ -379,7 +379,14 @@ impl ApiClient for ProxyClient {
     }
 
     fn get_external_call_latencies(&self) -> Option<i64> {
-        None
+        // Check if externcal call latencies field has some value
+        // If yes calculate the sum of all latencies and return the sum
+        if let Some(ref latencies) = self.external_call_latencies {
+            let sum: i64 = latencies.iter().map(|(_, latency)| *latency).sum();
+            Some(sum)
+        } else {
+            None
+        }
     }
 }
 
